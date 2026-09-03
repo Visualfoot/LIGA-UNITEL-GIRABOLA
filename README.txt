@@ -1,0 +1,1 @@
+Substitua imagens/hero.jpg pela vossa foto principal.
