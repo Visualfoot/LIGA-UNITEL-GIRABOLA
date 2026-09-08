@@ -1,1 +1,99 @@
-<!DOCTYPE html><html lang='pt'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Visualfoot</title><link rel='stylesheet' href='styles.css'></head><body><header><h1>VISUALFOOT</h1><p>O seu lugar no futebol angolano</p></header><section class='hero'><img src='imagens/hero.jpg'><div class='overlay'><h2>Petro vence Académica por 2–0</h2></div></section><main><div class='card'><h3>Último Resultado</h3><p>Académica 0–2 Petro</p></div></main><nav class='menu'><a>🏠</a><a>⚽</a><a>📊</a><a>📰</a><a>🛡️</a></nav></body></html>
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Visualfoot</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+margin:0;
+background:#02163a;
+color:#fff;
+font-family:Arial,sans-serif;
+}
+header{
+background:#032b73;
+padding:20px;
+text-align:center;
+border-bottom:2px solid #f2b705;
+}
+.card{
+margin:20px;
+padding:20px;
+background:#082c74;
+border-radius:12px;
+}
+.score{
+font-size:38px;
+font-weight:bold;
+text-align:center;
+margin:15px 0;
+}
+.status{
+text-align:center;
+color:#f2b705;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>VISUALFOOT</h1>
+<p>O seu lugar no futebol angolano</p>
+</header>
+
+<div class="card">
+<h2>Jogo em Destaque</h2>
+
+<div id="equipas">A carregar...</div>
+
+<div class="score" id="resultado">-</div>
+
+<div class="status" id="estado">...</div>
+
+</div>
+
+<script>
+const supabase = window.supabase.createClient(
+'COLOCA_AQUI_A_TUA_URL_DO_SUPABASE',
+'COLOCA_AQUI_A_TUA_ANON_KEY'
+);
+
+async function carregar(){
+
+const {data}=await supabase
+.from('jogos')
+.select('*')
+.order('id',{ascending:false})
+.limit(1)
+.single();
+
+if(!data)return;
+
+document.getElementById('equipas').innerHTML=
+`${data.casa} × ${data.fora}`;
+
+document.getElementById('resultado').innerHTML=
+`${data.golos_casa} - ${data.golos_fora}`;
+
+document.getElementById('estado').innerHTML=data.estado;
+}
+
+carregar();
+
+supabase.channel('ao-vivo')
+.on(
+'postgres_changes',
+{event:'*',schema:'public',table:'jogos'},
+carregar
+)
+.subscribe();
+
+</script>
+
+</body>
+</html>
