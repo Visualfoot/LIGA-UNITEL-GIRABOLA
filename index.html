@@ -1,15 +1,519 @@
-const { data, error } = await supabase
-  .from('jogos')
-  .select('casa, fora, golos_casa, golos_fora, estado, jornada')
-  .eq('estado', 'Final')
-  .order('jornada', { ascending: false })
-  .order('id', { ascending: false })
-  .limit(1)
-  .single();
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
 
-if (error) {
-  document.getElementById('equipas').innerHTML = 'Liga Unitel Girabola';
-  document.getElementById('resultado').innerHTML = 'Interclube 2–0 Académica do Lobito';
-  document.getElementById('estado').innerHTML = 'Final';
-  return;
-}
+  <title>Visualfoot | O seu lugar no futebol angolano</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #07111f;
+      color: #ffffff;
+      padding-bottom: 78px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: min(100% - 28px, 1100px);
+      margin: auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(7,17,31,.96);
+      border-bottom: 1px solid #1d2b3d;
+    }
+
+    .topo {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .logo span {
+      color: #ffd400;
+    }
+
+    .sublogo {
+      font-size: 10px;
+      color: #9ca9b8;
+      margin-top: 2px;
+    }
+
+    .icon {
+      font-size: 22px;
+    }
+
+    .atalhos {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      background: #0b1929;
+      border-bottom: 1px solid #1d2b3d;
+    }
+
+    .atalhos a {
+      padding: 13px 4px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .live {
+      color: #ff5151;
+    }
+
+    .hero {
+      margin-top: 18px;
+      min-height: 310px;
+      border-radius: 22px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background:
+        linear-gradient(180deg,rgba(8,18,31,.10),#07111f),
+        linear-gradient(135deg,#193b63,#07111f 70%);
+      border: 1px solid #23354b;
+    }
+
+    .tag {
+      display: inline-block;
+      width: fit-content;
+      background: #ffd400;
+      color: #07111f;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 7px 10px;
+      border-radius: 30px;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 {
+      font-size: 31px;
+      line-height: 1.03;
+      max-width: 650px;
+    }
+
+    .hero p {
+      color: #b7c2cf;
+      margin-top: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    section {
+      padding-top: 30px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      font-size: 18px;
+    }
+
+    .section-title a {
+      color: #ffd400;
+      font-size: 12px;
+    }
+
+    .card {
+      background: #0c1a2b;
+      border: 1px solid #1d3046;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 10px;
+    }
+
+    .competition {
+      font-size: 10px;
+      color: #8392a4;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .match {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+      font-weight: 800;
+    }
+
+    .match .away {
+      text-align: right;
+    }
+
+    .score {
+      background: #15283d;
+      color: #ffd400;
+      border-radius: 9px;
+      padding: 8px 10px;
+      font-size: 17px;
+    }
+
+    .status {
+      text-align: center;
+      color: #8595a8;
+      font-size: 10px;
+      margin-top: 10px;
+    }
+
+    .news {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 13px;
+      align-items: center;
+    }
+
+    .news-image {
+      height: 78px;
+      border-radius: 12px;
+      background: linear-gradient(135deg,#21476f,#0c1a2b);
+    }
+
+    .news small {
+      color: #ffd400;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .news h3 {
+      font-size: 14px;
+      line-height: 1.25;
+      margin-top: 5px;
+    }
+
+    .tabs {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+
+    .tabs span {
+      white-space: nowrap;
+      padding: 8px 12px;
+      background: #102237;
+      border-radius: 30px;
+      font-size: 11px;
+    }
+
+    .table-row {
+      display: grid;
+      grid-template-columns: 28px 1fr 45px;
+      padding: 11px 2px;
+      border-bottom: 1px solid #1b2c40;
+      font-size: 13px;
+    }
+
+    .table-row:last-child {
+      border-bottom: 0;
+    }
+
+    .pts {
+      text-align: right;
+      font-weight: 900;
+      color: #ffd400;
+    }
+
+    .people {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 10px;
+    }
+
+    .person {
+      background: #0c1a2b;
+      border: 1px solid #1d3046;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .person-photo {
+      height: 110px;
+      background: linear-gradient(145deg,#244b74,#101f31);
+    }
+
+    .person-info {
+      padding: 10px;
+    }
+
+    .person-info strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .person-info span {
+      display: block;
+      color: #8e9bad;
+      font-size: 9px;
+      margin-top: 3px;
+    }
+
+    .categories {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .category {
+      min-height: 95px;
+      padding: 15px;
+      border-radius: 16px;
+      background: linear-gradient(135deg,#122c48,#0c1827);
+      border: 1px solid #20364e;
+      display: flex;
+      align-items: flex-end;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding: 35px 0;
+      text-align: center;
+      border-top: 1px solid #1d2b3d;
+      color: #7f8c9b;
+      font-size: 11px;
+    }
+
+    footer strong {
+      color: #fff;
+      font-size: 17px;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 30;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 66px;
+      background: rgba(8,18,31,.98);
+      border-top: 1px solid #26364a;
+      display: grid;
+      grid-template-columns: repeat(5,1fr);
+    }
+
+    .bottom-nav a {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      font-size: 9px;
+      color: #9eabb9;
+    }
+
+    .bottom-nav .active {
+      color: #ffd400;
+    }
+
+    @media(min-width:700px) {
+      .hero h1 {font-size:48px;}
+      .categories {grid-template-columns:repeat(3,1fr);}
+      .people {grid-template-columns:repeat(4,1fr);}
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="container topo">
+    <div class="icon">☰</div>
+
+    <div>
+      <div class="logo">VISUAL<span>FOOT</span></div>
+      <div class="sublogo">O seu lugar no futebol angolano</div>
+    </div>
+
+    <div class="icon">⌕</div>
+  </div>
+
+  <nav class="atalhos">
+    <a class="live" href="#">● AO VIVO</a>
+    <a href="#jogos">JOGOS</a>
+    <a href="#girabola">TABELA</a>
+  </nav>
+</header>
+
+<main class="container">
+
+  <section class="hero">
+    <span class="tag">DESTAQUE</span>
+    <h1>Todo o futebol angolano num só lugar.</h1>
+    <p>Notícias, jogos, resultados, estatísticas, clubes, jogadores e angolanos pelo mundo.</p>
+  </section>
+
+  <section id="jogos">
+    <div class="section-title">
+      <h2>⚽ Jogos</h2>
+      <a href="#">Ver todos →</a>
+    </div>
+
+    <div class="card">
+      <div class="competition">Liga Unitel Girabola</div>
+      <div class="match">
+        <div>Interclube</div>
+        <div class="score">2–0</div>
+        <div class="away">Académica</div>
+      </div>
+      <div class="status">FINAL</div>
+    </div>
+
+    <div class="card">
+      <div class="competition">Seleção Nacional</div>
+      <div class="match">
+        <div>Angola 🇦🇴</div>
+        <div class="score">VS</div>
+        <div class="away">Malawi 🇲🇼</div>
+      </div>
+      <div class="status">PRÓXIMO JOGO</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <h2>📰 Últimas Notícias</h2>
+      <a href="#">Todas →</a>
+    </div>
+
+    <div class="card news">
+      <div class="news-image"></div>
+      <div>
+        <small>GIRABOLA</small>
+        <h3>A atualidade do futebol angolano em destaque na Visualfoot.</h3>
+      </div>
+    </div>
+
+    <div class="card news">
+      <div class="news-image"></div>
+      <div>
+        <small>SELEÇÕES</small>
+        <h3>Palancas Negras: jogos, convocatórias e acompanhamento completo.</h3>
+      </div>
+    </div>
+  </section>
+
+  <section id="girabola">
+    <div class="section-title">
+      <h2>🏆 Liga Unitel Girabola</h2>
+      <a href="#">Entrar →</a>
+    </div>
+
+    <div class="tabs">
+      <span>Jogos</span>
+      <span>Jornadas</span>
+      <span>Classificação</span>
+      <span>Estatísticas</span>
+      <span>Clubes</span>
+      <span>Plantéis</span>
+    </div>
+
+    <div class="card">
+      <div class="table-row">
+        <strong>1</strong><span>Clube A</span><span class="pts">12</span>
+      </div>
+      <div class="table-row">
+        <strong>2</strong><span>Clube B</span><span class="pts">10</span>
+      </div>
+      <div class="table-row">
+        <strong>3</strong><span>Clube C</span><span class="pts">9</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <h2>🌍 Angolanos pelo Mundo</h2>
+      <a href="#">Ver todos →</a>
+    </div>
+
+    <div class="people">
+      <div class="person">
+        <div class="person-photo"></div>
+        <div class="person-info">
+          <strong>Jogador</strong>
+          <span>Clube • País</span>
+        </div>
+      </div>
+
+      <div class="person">
+        <div class="person-photo"></div>
+        <div class="person-info">
+          <strong>Jogadora</strong>
+          <span>Clube • País</span>
+        </div>
+      </div>
+
+      <div class="person">
+        <div class="person-photo"></div>
+        <div class="person-info">
+          <strong>Treinador</strong>
+          <span>Clube • País</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-title">
+      <h2>Todo o Futebol</h2>
+    </div>
+
+    <div class="categories">
+      <div class="category">⚽ Futebol Feminino</div>
+      <div class="category">🥅 Futsal</div>
+      <div class="category">🏖️ Futebol de Praia</div>
+      <div class="category">🌱 Formação</div>
+      <div class="category">🇦🇴 Seleções</div>
+      <div class="category">🌍 Competições CAF</div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <strong>VISUALFOOT</strong><br><br>
+  O seu lugar no futebol angolano<br><br>
+  Instagram • Facebook • X • YouTube
+</footer>
+
+<nav class="bottom-nav">
+  <a class="active" href="#">⌂<span>Início</span></a>
+  <a href="#jogos">⚽<span>Jogos</span></a>
+  <a href="#">▤<span>Notícias</span></a>
+  <a href="#girabola">🏆<span>Competições</span></a>
+  <a href="#">☰<span>Mais</span></a>
+</nav>
+
+</body>
+</html>
